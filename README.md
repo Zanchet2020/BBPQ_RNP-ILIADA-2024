@@ -20,3 +20,5 @@ sudo docker run -v ./output:/output challenge
 ```
 
 A solução dos problemas do Cryptopals serão impressos no terminal, enquanto a imagem de solução para encontrar a FLAG está em ./output, onde é possível visualizar a imagem com a FLAG (grupocpq-fAJMAPAq5VK7) exposta.
+
+OBS: antes de executar os códigos, tenha certeza que o daemon do docker está rodando
