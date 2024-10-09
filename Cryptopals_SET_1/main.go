@@ -55,15 +55,19 @@ var char_weight_dictionary=map[string]uint{
 }
 
 func hex_to_base64(input string) string{
+	// Decodificando hex
 	bytes, err := hex.DecodeString(input)
 	if err != nil {
 		fmt.Println(err)
 		return ""
 	}
+	// Codificando para base64
 	var output string = base64.StdEncoding.EncodeToString(bytes)
 	return output
 }
 
+
+// Realiza XOR de duas slices de bytes
 func xor_byte_slice(a []byte, b []byte) []byte{
 	var output []byte = make([]byte, len(a))
 	for i := range output{
@@ -72,6 +76,7 @@ func xor_byte_slice(a []byte, b []byte) []byte{
 	return output
 }
 
+// Realiza o XOR de duas strings hex
 func fixed_xor(input1 string, input2 string) (string, error) {
 	bytes1, err1 := hex.DecodeString(input1)
 	if err1 != nil {
@@ -91,6 +96,7 @@ func fixed_xor(input1 string, input2 string) (string, error) {
 	return hex.EncodeToString(output), nil
 }
 
+// Realiza XOR de todos os bytes de uma string com um byte único
 func char_xor(input string, char int) string{
 	bytes, err := hex.DecodeString(input)
 	if err != nil {
@@ -104,25 +110,31 @@ func char_xor(input string, char int) string{
 	return hex.EncodeToString(output)
 }
 
-
+// Quebra uma codificação XOR de uma string através do teste da frequência de letras e fonemas do inglês
 func break_single_byte_XOR_cypher(input string) (string, byte, uint){
 	const byte_size int = 256
 	var scores = make([]uint, byte_size)
 	var max uint = 0
 	var message string
 	var cypher byte
+	// Loop por todos os bytes possíveis
 	for i := 0; i < byte_size; i++{
-		var bytes, _ = hex.DecodeString(char_xor(input, i))
+		var xored_string string = char_xor(input, i)
+		var bytes, _ = hex.DecodeString(xored_string)
 		var str = string(bytes)
+		// Dois loops para somar a "pontuação" da string
+		// Somando a pontuação em relação às letras
 		for index := range str{
 			scores[i] = 0
 			scores[i] += char_weight_dictionary[strings.ToLower(string(str[index]))]
 		}
+		// Somando a pontuação em relação aos fonemas
 		for word, key := range word_weight_dictionary{
 			if strings.Contains(str, word){
 				scores[i] += key
 			}
 		}
+		// Seleciona a maior pontuação
 		if scores[i] > max {
 			max = scores[i]
 			message = str
