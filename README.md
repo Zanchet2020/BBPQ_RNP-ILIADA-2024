@@ -3,8 +3,17 @@
 
 Para executar o código:
 
+Clone o repositório:
 ```
 git clone https://github.com/Zanchet2020/BBPQ_RNP-ILIADA-2024.git
+```
+Ou por ssh:
+```
+git clone git@github.com:Zanchet2020/BBPQ_RNP-ILIADA-2024.git
+```
+
+E então
+```
 cd BBPQ_RNP-ILIADA-2024
 sudo docker build -t challenge .
 sudo docker run -v ./output:/output challenge
