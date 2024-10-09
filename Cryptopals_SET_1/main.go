@@ -318,7 +318,7 @@ func main(){
 	{
 		fmt.Println("===========================")
 		fmt.Println(">>>> Detect single byte XOR Cypher")
-		file, err := os.Open("strings_to_decode.txt")
+		file, err := os.Open("6.txt")
 		if err!=nil{
 			fmt.Println(err)
 		}
