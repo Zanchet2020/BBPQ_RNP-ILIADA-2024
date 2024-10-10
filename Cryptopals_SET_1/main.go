@@ -8,9 +8,10 @@ import (
 	"strings"
 	"os"
 	"bufio"
+	"sync"
 )
 
-
+//var wg sync.WaitGroup
 
 var word_weight_dictionary=map[string]uint{
         "of":142,
@@ -110,37 +111,64 @@ func char_xor(input string, char int) string{
 	return hex.EncodeToString(output)
 }
 
+type return_val struct{
+	message string
+	score uint
+	key byte
+}
+
+func break_single_byte_XOR_cypher_routine(input string, key byte, return_list *[]return_val, wg *sync.WaitGroup, m *sync.Mutex){
+	defer wg.Done()
+	var xored_string string = char_xor(input, int(key))
+	var bytes, _ = hex.DecodeString(xored_string)
+	var str = string(bytes)
+	var score uint
+	// Dois loops para somar a "pontuação" da string
+	// Somando a pontuação em relação às letras
+	for index := range str{
+		score = 0
+		score += char_weight_dictionary[strings.ToLower(string(str[index]))]
+	}
+	// Somando a pontuação em relação aos fonemas
+	for word, key := range word_weight_dictionary{
+		if strings.Contains(str, word){
+			score += key
+		}
+	}
+
+	new := return_val{str, score, key}
+	m.Lock()
+	*return_list = append(*return_list, new)
+	m.Unlock()
+}
+
 // Quebra uma codificação XOR de uma string através do teste da frequência de letras e fonemas do inglês
 func break_single_byte_XOR_cypher(input string) (string, byte, uint){
 	const byte_size int = 256
-	var scores = make([]uint, byte_size)
+	//var scores = make([]uint, byte_size)
 	var max uint = 0
 	var message string
 	var cypher byte
 	// Loop por todos os bytes possíveis
+
+	var m sync.Mutex
+	var wg sync.WaitGroup
+	wg.Add(byte_size)
+	var return_list = make([]return_val, byte_size)
+	//c := make(chan return_val, byte_size)
+	
 	for i := 0; i < byte_size; i++{
-		var xored_string string = char_xor(input, i)
-		var bytes, _ = hex.DecodeString(xored_string)
-		var str = string(bytes)
-		// Dois loops para somar a "pontuação" da string
-		// Somando a pontuação em relação às letras
-		for index := range str{
-			scores[i] = 0
-			scores[i] += char_weight_dictionary[strings.ToLower(string(str[index]))]
-		}
-		// Somando a pontuação em relação aos fonemas
-		for word, key := range word_weight_dictionary{
-			if strings.Contains(str, word){
-				scores[i] += key
-			}
-		}
-		// Seleciona a maior pontuação
-		if scores[i] > max {
-			max = scores[i]
-			message = str
-			cypher = byte(i)
+		go break_single_byte_XOR_cypher_routine(input, byte(i), &return_list, &wg, &m)
+	}
+	wg.Wait()
+	for _, x := range return_list{
+		if x.score > max{
+			max = x.score
+			message = x.message
+			cypher = x.key
 		}
 	}
+	
 	return message, byte(cypher), max
 }
 
@@ -156,8 +184,9 @@ func repeating_key_XOR_cypher(input string, key string) string {
 
 
 func main(){
-	{
+	
 	// Convert hex to base 64 ====================================================
+	{
 		fmt.Println("===========================")
 		fmt.Println(">>>> Convert hex to base 64:")
 		const input = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d"
