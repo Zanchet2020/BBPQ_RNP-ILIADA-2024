@@ -6,6 +6,7 @@ import (
 	"image/color"
 	"image/png"
 	"os"
+	"sync"
 )
 
 
@@ -35,7 +36,26 @@ func encodeImage(filename string, img image.Image) (error) {
 	return png.Encode(f, img)
 }
 
+func inner_loop(i int, height int, img1 img, img2 img, img_out *img, wg *sync.WaitGroup){
+	defer wg.Done()
+	for j:= range height{
+		//var r1, r2, g1, g2, b1, b2 uint32
+		r1, g1, b1, _ := randomImage.At(i, j).RGBA()
+		r2, g2, b2, _ := encryptedImage.At(i, j).RGBA()
+		
+		
+		// if r1 == r2 && g1 == g2 && b1 == b2{
+		// 	fmt.Println(i, j)
+		// 	fmt.Println(randomImage.At(i,j).RGBA())
+		// 	fmt.Println(encryptedImage.At(i,j).RGBA())
+		// }
+		col := color.RGBA{uint8(r2 + r1), uint8(g2 + g1), uint8(b2 + b1), 255}
+		decryptedImage.Set(i, j, col)
+	}
+}
+
 func main(){
+
 	randomImage, err := decodeImage("random-image.png")
 	if err != nil{
 		fmt.Println("Failed to decode image:", err)
@@ -48,23 +68,26 @@ func main(){
 	bounds := randomImage.Bounds()
 	width, height := bounds.Max.X, bounds.Max.Y
 
+	var wg sync.WaitGroup
+	wg.Add(width)
+	
 	decryptedImage := image.NewRGBA(bounds)
 
 	for i := range width{
-		for j:= range height{
-			//var r1, r2, g1, g2, b1, b2 uint32
-			r1, g1, b1, _ := randomImage.At(i, j).RGBA()
-			r2, g2, b2, _ := encryptedImage.At(i, j).RGBA()
+		// for j:= range height{
+		// 	//var r1, r2, g1, g2, b1, b2 uint32
+		// 	r1, g1, b1, _ := randomImage.At(i, j).RGBA()
+		// 	r2, g2, b2, _ := encryptedImage.At(i, j).RGBA()
 
 
-			// if r1 == r2 && g1 == g2 && b1 == b2{
-			// 	fmt.Println(i, j)
-			// 	fmt.Println(randomImage.At(i,j).RGBA())
-			// 	fmt.Println(encryptedImage.At(i,j).RGBA())
-			// }
-			col := color.RGBA{uint8(r2 + r1), uint8(g2 + g1), uint8(b2 + b1), 255}
-			decryptedImage.Set(i, j, col)
-		}
+		// 	// if r1 == r2 && g1 == g2 && b1 == b2{
+		// 	// 	fmt.Println(i, j)
+		// 	// 	fmt.Println(randomImage.At(i,j).RGBA())
+		// 	// 	fmt.Println(encryptedImage.At(i,j).RGBA())
+		// 	// }
+		// 	col := color.RGBA{uint8(r2 + r1), uint8(g2 + g1), uint8(b2 + b1), 255}
+		// 	decryptedImage.Set(i, j, col)
+		// }
 	}
 
 	
