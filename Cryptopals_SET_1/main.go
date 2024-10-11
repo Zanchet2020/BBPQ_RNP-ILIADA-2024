@@ -11,8 +11,6 @@ import (
 	"sync"
 )
 
-//var wg sync.WaitGroup
-
 var word_weight_dictionary=map[string]uint{
         "of":142,
         " a ":131,
@@ -145,7 +143,6 @@ func break_single_byte_XOR_cypher_routine(input string, key byte, return_list *[
 // Quebra uma codificação XOR de uma string através do teste da frequência de letras e fonemas do inglês
 func break_single_byte_XOR_cypher(input string) (string, byte, uint){
 	const byte_size int = 256
-	//var scores = make([]uint, byte_size)
 	var max uint = 0
 	var message string
 	var cypher byte
@@ -155,7 +152,6 @@ func break_single_byte_XOR_cypher(input string) (string, byte, uint){
 	var wg sync.WaitGroup
 	wg.Add(byte_size)
 	var return_list = make([]return_val, byte_size)
-	//c := make(chan return_val, byte_size)
 	
 	for i := 0; i < byte_size; i++{
 		go break_single_byte_XOR_cypher_routine(input, byte(i), &return_list, &wg, &m)

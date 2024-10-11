@@ -36,19 +36,14 @@ func encodeImage(filename string, img image.Image) (error) {
 	return png.Encode(f, img)
 }
 
+
+// inner loop to use go routines
 func inner_loop(i int, height int, img1 image.Image, img2 image.Image, img_out *image.RGBA, wg *sync.WaitGroup){
 	defer wg.Done()
 	for j:= range height{
-		//var r1, r2, g1, g2, b1, b2 uint32
 		r1, g1, b1, _ := img1.At(i, j).RGBA()
 		r2, g2, b2, _ := img2.At(i, j).RGBA()
 		
-		
-		// if r1 == r2 && g1 == g2 && b1 == b2{
-		// 	fmt.Println(i, j)
-		// 	fmt.Println(randomImage.At(i,j).RGBA())
-		// 	fmt.Println(encryptedImage.At(i,j).RGBA())
-		// }
 		col := color.RGBA{uint8(r2 + r1), uint8(g2 + g1), uint8(b2 + b1), 255}
 		img_out.Set(i, j, col)
 	}
@@ -74,20 +69,7 @@ func main(){
 	decryptedImage := image.NewRGBA(bounds)
 
 	for i := range width{
-		// for j:= range height{
-		// 	//var r1, r2, g1, g2, b1, b2 uint32
-		// 	r1, g1, b1, _ := randomImage.At(i, j).RGBA()
-		// 	r2, g2, b2, _ := encryptedImage.At(i, j).RGBA()
-
 		go inner_loop(i, height, randomImage, encryptedImage, decryptedImage, &wg)
-		// 	// if r1 == r2 && g1 == g2 && b1 == b2{
-		// 	// 	fmt.Println(i, j)
-		// 	// 	fmt.Println(randomImage.At(i,j).RGBA())
-		// 	// 	fmt.Println(encryptedImage.At(i,j).RGBA())
-		// 	// }
-		// 	col := color.RGBA{uint8(r2 + r1), uint8(g2 + g1), uint8(b2 + b1), 255}
-		// 	decryptedImage.Set(i, j, col)
-		// }
 	}
 
 	wg.Wait()
