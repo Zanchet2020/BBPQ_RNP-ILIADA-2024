@@ -36,22 +36,28 @@ func encodeImage(filename string, img image.Image) (error) {
 	return png.Encode(f, img)
 }
 
-func inner_loop(i int, height int, img1 image.Image, img2 image.Image, img_out *image.RGBA, wg *sync.WaitGroup){
-	defer wg.Done()
+func innermost_loop(i int, j int, img1 image.Image, img2 image.Image, img_out *image.RGBA, wg2 *sync.WaitGroup){
+	defer wg2.Done()
+	r1, g1, b1, _ := img1.At(i, j).RGBA()
+	r2, g2, b2, _ := img2.At(i, j).RGBA()
+	
+	col := color.RGBA{uint8(r2 + r1), uint8(g2 + g1), uint8(b2 + b1), 255}
+	img_out.Set(i, j, col)
+}
+
+func inner_loop(i int, height int, img1 image.Image, img2 image.Image, img_out *image.RGBA, wg1 *sync.WaitGroup){
+	defer wg1.Done()
+	var wg2 sync.WaitGroup
+	wg2.Add(height)
 	for j:= range height{
-		//var r1, r2, g1, g2, b1, b2 uint32
-		r1, g1, b1, _ := img1.At(i, j).RGBA()
-		r2, g2, b2, _ := img2.At(i, j).RGBA()
+		// r1, g1, b1, _ := img1.At(i, j).RGBA()
+		// r2, g2, b2, _ := img2.At(i, j).RGBA()
 		
-		
-		// if r1 == r2 && g1 == g2 && b1 == b2{
-		// 	fmt.Println(i, j)
-		// 	fmt.Println(randomImage.At(i,j).RGBA())
-		// 	fmt.Println(encryptedImage.At(i,j).RGBA())
-		// }
-		col := color.RGBA{uint8(r2 + r1), uint8(g2 + g1), uint8(b2 + b1), 255}
-		img_out.Set(i, j, col)
+		// col := color.RGBA{uint8(r2 + r1), uint8(g2 + g1), uint8(b2 + b1), 255}
+		// img_out.Set(i, j, col)
+		go innermost_loop(i, j, img1, img2, img_out, &wg2)
 	}
+	wg2.Wait()
 }
 
 func main(){
@@ -68,29 +74,16 @@ func main(){
 	bounds := randomImage.Bounds()
 	width, height := bounds.Max.X, bounds.Max.Y
 
-	var wg sync.WaitGroup
-	wg.Add(width)
+	var wg1 sync.WaitGroup
+	wg1.Add(width)
 	
 	decryptedImage := image.NewRGBA(bounds)
-
+	
 	for i := range width{
-		// for j:= range height{
-		// 	//var r1, r2, g1, g2, b1, b2 uint32
-		// 	r1, g1, b1, _ := randomImage.At(i, j).RGBA()
-		// 	r2, g2, b2, _ := encryptedImage.At(i, j).RGBA()
-
-		go inner_loop(i, height, randomImage, encryptedImage, decryptedImage, &wg)
-		// 	// if r1 == r2 && g1 == g2 && b1 == b2{
-		// 	// 	fmt.Println(i, j)
-		// 	// 	fmt.Println(randomImage.At(i,j).RGBA())
-		// 	// 	fmt.Println(encryptedImage.At(i,j).RGBA())
-		// 	// }
-		// 	col := color.RGBA{uint8(r2 + r1), uint8(g2 + g1), uint8(b2 + b1), 255}
-		// 	decryptedImage.Set(i, j, col)
-		// }
+		go inner_loop(i, height, randomImage, encryptedImage, decryptedImage, &wg1)
 	}
 
-	wg.Wait()
+	wg1.Wait()
 	
 	err = encodeImage("decoded1.png", decryptedImage)
 	if err != nil{
